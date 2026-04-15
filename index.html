@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>The Timeline ✨</title>
+    <title>For You 🤍</title>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@200;300;400&family=Space+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@200;300;400&display=swap');
 
         :root {
-            --bg-deep: #020102;
-            --line-color: #ffcf70;
-            --line-glow: rgba(255, 207, 112, 0.6);
-            --glitch-red: rgba(255, 0, 60, 0.8);
-            --glitch-blue: rgba(0, 200, 255, 0.8);
+            --bg-dark: #0a0508;
+            --orb-color: #ffb3c6;
+            --orb-glow: rgba(255, 179, 198, 0.4);
             --text-light: #f3e5e5;
+            --final-bg: #ffe6ec;
+            --final-text: #5c3a45;
         }
 
         * {
@@ -23,376 +23,253 @@
         }
 
         body, html {
-            background-color: var(--bg-deep);
-            width: 100vw; min-height: 100dvh; 
+            background-color: var(--bg-dark);
+            width: 100vw; min-height: 100vh; min-height: 100dvh; 
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             overflow: hidden; color: var(--text-light);
             font-family: 'Montserrat', sans-serif;
             touch-action: none;
+            transition: background-color 3s ease;
         }
 
-        /* --- HARDWARE CANVAS (Particles & Ripples) --- */
-        #particle-canvas {
-            position: absolute; top: 0; left: 0;
-            width: 100vw; height: 100dvh;
-            z-index: 1; pointer-events: auto; /* Allows touch for ripples */
+        /* --- 1. INITIAL START SCREEN --- */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 50; cursor: pointer; transition: opacity 1.5s ease;
+        }
+        
+        .start-text {
+            font-family: 'Cormorant Garamond', serif; font-size: clamp(1.5rem, 6vw, 2.2rem);
+            color: var(--orb-color); font-style: italic; margin-bottom: 30px;
+            text-align: center; padding: 0 20px; opacity: 0.8;
         }
 
-        /* --- 3D PARALLAX WRAPPER --- */
-        #parallax-wrapper {
+        .start-btn {
+            border: 1px solid rgba(255, 179, 198, 0.3); padding: 12px 35px; border-radius: 30px;
+            font-size: 0.75rem; letter-spacing: 4px; text-transform: uppercase; color: var(--orb-color);
+            animation: pulseHint 2s infinite alternate; pointer-events: none;
+        }
+
+        /* --- 2. THE GROUNDING ORB --- */
+        #hug-container {
             position: relative; width: 100vw; height: 100dvh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 2s ease; z-index: 10;
+        }
+
+        .orb-wrapper {
+            position: relative; width: clamp(100px, 30vw, 150px); aspect-ratio: 1/1;
             display: flex; justify-content: center; align-items: center;
-            z-index: 5; transition: transform 0.1s ease-out; pointer-events: none;
+            margin-bottom: 10vh;
         }
 
-        /* --- THE SACRED TIMELINE (SVG) --- */
-        #timeline-container {
-            position: absolute;
-            width: 100vw; height: 60vh;
-            display: flex; justify-content: center; align-items: center;
+        /* The glowing light source */
+        #orb {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, var(--orb-color) 40%, transparent 80%);
+            box-shadow: 0 0 40px var(--orb-glow), 0 0 80px rgba(255, 179, 198, 0.2);
+            filter: blur(5px);
+            transform: scale(1);
+            /* Transition is handled dynamically in JS for different breath lengths */
+            will-change: transform; 
         }
 
-        svg { width: 100%; height: 100%; max-width: 500px; overflow: visible; }
-
-        #stable-line {
-            stroke: var(--line-color); stroke-width: 2;
-            filter: drop-shadow(0 0 8px var(--line-glow));
-            transition: stroke-width 1s ease, opacity 1s ease;
-            stroke-dasharray: 200 50; animation: flowLine 3s linear infinite;
+        /* Floating ambient dust around the orb */
+        .dust {
+            position: absolute; border-radius: 50%; background: #fff;
+            opacity: 0; filter: blur(1px); animation: floatDust 4s infinite ease-in-out alternate;
         }
 
-        .branch-thread {
-            fill: none; stroke: var(--line-color);
-            stroke-linecap: round; stroke-linejoin: round; opacity: 0;
+        /* --- 3. BREATHE TEXT --- */
+        #breath-text {
+            font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 8vw, 3rem);
+            color: var(--text-light); font-style: italic; letter-spacing: 2px;
+            text-align: center; height: 60px;
+            transition: opacity 1s ease; opacity: 0;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
         }
 
-        .thread-main { stroke-width: 3; filter: drop-shadow(0 0 12px var(--line-glow)); }
-        .thread-sub1 { stroke-width: 1.5; filter: drop-shadow(0 0 5px var(--line-glow)); opacity: 0.7; }
-        .thread-sub2 { stroke-width: 1; filter: drop-shadow(0 0 3px var(--line-glow)); opacity: 0.5; }
-
-        /* --- THE FINALE REVEAL TEXT (FROSTED FRAME) --- */
-        #reveal-text {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            text-align: center; width: 90%; max-width: 420px;
-            opacity: 0; pointer-events: none; z-index: 20;
-            
-            background: rgba(10, 2, 5, 0.75);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 207, 112, 0.2); border-radius: 24px;
-            padding: 40px 30px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 0 30px rgba(255, 207, 112, 0.05);
-            transition: opacity 1.5s ease;
+        .sub-text {
+            position: absolute; bottom: 10vh; font-size: 0.7rem; letter-spacing: 3px;
+            text-transform: uppercase; color: rgba(243, 229, 229, 0.5); font-weight: 300;
         }
 
-        .reveal-title {
+        /* --- 4. FINAL HUG SCREEN --- */
+        #final-screen {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-color: var(--final-bg); z-index: 100;
+            opacity: 0; pointer-events: none; transition: opacity 4s ease;
+        }
+
+        .final-message {
             font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 7vw, 2.5rem);
-            color: var(--line-color); font-style: italic; margin-bottom: 15px;
-            text-shadow: 0 0 20px var(--line-glow); min-height: 1.2em;
-        }
-
-        .reveal-body {
-            font-size: clamp(0.9rem, 4vw, 1.1rem); line-height: 1.8;
-            color: var(--text-light); font-weight: 300; letter-spacing: 1px; min-height: 5em;
+            color: var(--final-text); font-style: italic; text-align: center;
+            line-height: 1.6; padding: 0 30px; opacity: 0; transform: translateY(20px);
+            transition: opacity 3s ease 1s, transform 3s ease 1s;
         }
         
-        .typewriter-cursor::after {
-            content: '|'; animation: blink 1s infinite; color: var(--line-color);
-        }
+        .final-message.show { opacity: 1; transform: translateY(0); }
 
-        /* --- THE STATUS MONITOR --- */
-        #status-monitor {
-            position: absolute; bottom: 8vh; left: 50%; transform: translateX(-50%);
-            display: flex; flex-direction: column; align-items: center;
-            opacity: 0.6; transition: opacity 1s ease; z-index: 10; pointer-events: none;
-        }
-
-        .clock { font-family: 'Space Mono', monospace; font-size: 1.2rem; color: var(--line-color); letter-spacing: 2px; margin-bottom: 5px; }
-        .status-text { font-size: 0.65rem; letter-spacing: 4px; text-transform: uppercase; color: var(--text-light); font-weight: 200; transition: color 0.3s; }
-
-        /* --- ANIMATION PHASE 1: REALITY GLITCH --- */
-        .glitching #stable-line { animation: glitchLine 0.2s infinite, flowLine 3s linear infinite; }
-        .glitching .clock { color: #ff4d4d; animation: textGlitch 0.3s infinite; }
-        .glitching .status-text { color: #ff4d4d; }
-
-        /* --- ANIMATION PHASE 2: BRANCHING SHATTER --- */
-        .branching #stable-line { opacity: 0; stroke-width: 0; animation: none; }
-        .branching .branch-thread {
-            opacity: 1; stroke-dasharray: 100; stroke-dashoffset: 100;
-            animation: drawThread 3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
-        }
-        .branching #thread-1 { animation-delay: 0s; }
-        .branching #thread-2 { animation-delay: 0.3s; }
-        .branching #thread-3 { animation-delay: 0.6s; }
-        .branching #thread-4 { animation-delay: 0.9s; }
-        .branching #status-monitor { opacity: 0; }
-
-        /* --- KEYFRAMES --- */
-        @keyframes flowLine { from { stroke-dashoffset: 250; } to { stroke-dashoffset: 0; } }
-        @keyframes drawThread { to { stroke-dashoffset: 0; } }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        
-        /* Chromatic Aberration Glitch Effects */
-        @keyframes glitchLine {
-            0% { filter: drop-shadow(3px 0 var(--glitch-red)) drop-shadow(-3px 0 var(--glitch-blue)); transform: translateY(1px); }
-            20% { filter: drop-shadow(-3px 0 var(--glitch-red)) drop-shadow(3px 0 var(--glitch-blue)); transform: translateY(-1px); }
-            40% { filter: drop-shadow(2px 2px var(--glitch-red)) drop-shadow(-2px -2px var(--glitch-blue)); transform: translateY(2px); }
-            60% { filter: drop-shadow(-2px -2px var(--glitch-red)) drop-shadow(2px 2px var(--glitch-blue)); transform: translateY(-2px); }
-            80% { filter: drop-shadow(4px 0 var(--glitch-red)) drop-shadow(-4px 0 var(--glitch-blue)); transform: translateY(1px); }
-            100% { filter: drop-shadow(-1px 0 var(--glitch-red)) drop-shadow(1px 0 var(--glitch-blue)); transform: translateY(0); }
-        }
-        @keyframes textGlitch {
-            0% { transform: translate(1px, 1px); } 25% { transform: translate(-1px, -1px); }
-            50% { transform: translate(2px, 0); } 75% { transform: translate(-2px, 1px); } 100% { transform: translate(0, -1px); }
-        }
+        /* Animations */
+        @keyframes pulseHint { 0% { box-shadow: 0 0 10px rgba(255, 179, 198, 0); } 100% { box-shadow: 0 0 20px rgba(255, 179, 198, 0.4); } }
+        @keyframes floatDust { 0% { transform: translate(0, 0) scale(0.8); opacity: 0.1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1.5); opacity: 0.6; } }
     </style>
 </head>
 <body>
 
-    <canvas id="particle-canvas"></canvas>
+    <div id="start-screen">
+        <div class="start-text">I'm right here with you.</div>
+        <div class="start-btn">Tap to hold my hand</div>
+    </div>
 
-    <div id="parallax-wrapper">
-        <div id="timeline-container">
-            <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
-                <line id="stable-line" x1="-50" y1="100" x2="250" y2="100" />
-                <g transform="translate(0, 15)">
-                    <path id="thread-1" class="branch-thread thread-main" pathLength="100"
-                          d="M 100 160 C 100 160 20 90 20 50 C 20 20 60 10 100 40 C 140 10 180 20 180 50 C 180 90 100 160 100 160 Z" />
-                    <path id="thread-2" class="branch-thread thread-sub1" pathLength="100"
-                          d="M 100 160 C 80 130 35 90 35 55 C 35 30 65 20 100 45" />
-                    <path id="thread-3" class="branch-thread thread-sub1" pathLength="100"
-                          d="M 100 160 C 120 130 165 90 165 55 C 165 30 135 20 100 45" />
-                    <path id="thread-4" class="branch-thread thread-sub2" pathLength="100"
-                          d="M 0 100 C 40 80 70 140 100 160 C 130 140 160 80 200 100" />
-                </g>
-            </svg>
+    <div id="hug-container">
+        <div class="orb-wrapper" id="orb-wrapper">
+            <div id="orb"></div>
+        </div>
+        <div id="breath-text">Match my breathing.</div>
+        <div class="sub-text">Focus on the light</div>
+    </div>
 
-            <div id="reveal-text">
-                <h1 class="reveal-title" id="type-title"></h1>
-                <div style="width: 40px; height: 1px; background: var(--line-color); margin: 0 auto 20px auto; box-shadow: 0 0 10px var(--line-color);"></div>
-                <p class="reveal-body" id="type-body"></p>
-            </div>
+    <div id="final-screen">
+        <div class="final-message" id="final-message">
+            Consider this a tight, five-minute-long hug.<br><br>
+            Take a deep breath.<br>You are safe, and you are going to be okay.
         </div>
     </div>
 
-    <div id="status-monitor">
-        <div class="clock" id="clock-display">--:--:--</div>
-        <div class="status-text" id="status-text">Timeline Stable</div>
-    </div>
-
     <script>
-        // ==========================================
-        // ⏰ DETONATION TIME (24hr format)
-        // Set to current time + 1 min to test!
-        // ==========================================
-        const TARGET_HOUR = 16;
-        const TARGET_MINUTE = 30;
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const hugContainer = document.getElementById('hug-container');
+        const orb = document.getElementById('orb');
+        const breathText = document.getElementById('breath-text');
+        const orbWrapper = document.getElementById('orb-wrapper');
+        const finalScreen = document.getElementById('final-screen');
+        const finalMessage = document.getElementById('final-message');
 
-        const clockDisplay = document.getElementById('clock-display');
-        const statusText = document.getElementById('status-text');
-        const parallaxWrapper = document.getElementById('parallax-wrapper');
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-        const revealText = document.getElementById('reveal-text');
-        
-        let currentState = 'stable'; 
-        let particles = [];
-        let ripples = [];
-        let cw = canvas.width = window.innerWidth;
-        let ch = canvas.height = window.innerHeight;
-        let heartbeatInterval;
+        let hapticInterval;
 
-        window.addEventListener('resize', () => { cw = canvas.width = window.innerWidth; ch = canvas.height = window.innerHeight; });
-
-        // --- 1. TIMELINE LOGIC ---
-        function updateClock() {
-            if (currentState === 'detonated') return;
-
-            const now = new Date();
-            const h = now.getHours();
-            const m = now.getMinutes();
-            const s = now.getSeconds();
-
-            clockDisplay.innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-
-            const currentTotalMins = (h * 60) + m;
-            const targetTotalMins = (TARGET_HOUR * 60) + TARGET_MINUTE;
-            const minutesLeft = targetTotalMins - currentTotalMins;
-
-            if (minutesLeft === 1 && currentState === 'stable') triggerGlitch();
-            else if (minutesLeft <= 0 && currentState !== 'detonated') triggerDetonation();
+        // Generate ambient floating dust around the orb
+        for(let i=0; i<15; i++) {
+            let dust = document.createElement('div');
+            dust.className = 'dust';
+            dust.style.width = dust.style.height = `${Math.random() * 4 + 2}px`;
+            dust.style.left = `${Math.random() * 100}%`;
+            dust.style.top = `${Math.random() * 100}%`;
+            dust.style.animationDelay = `${Math.random() * 2}s`;
+            dust.style.setProperty('--dx', `${(Math.random() - 0.5) * 40}px`);
+            dust.style.setProperty('--dy', `${(Math.random() - 0.5) * 40}px`);
+            orbWrapper.appendChild(dust);
         }
 
-        function triggerGlitch() {
-            currentState = 'glitching'; document.body.classList.add('glitching');
-            statusText.innerText = "ANOMALY DETECTED";
-            setInterval(() => {
-                if(currentState !== 'glitching') return;
-                const texts = ["CRITICAL ERROR", "ANOMALY DETECTED", "REALITY SHIFTING", "TIMELINE UNSTABLE"];
-                statusText.innerText = texts[Math.floor(Math.random() * texts.length)];
-                if(navigator.vibrate && Math.random() > 0.7) navigator.vibrate(10);
-            }, 800);
-        }
+        // --- START THE EXPERIENCE ---
+        startScreen.addEventListener('click', () => {
+            // Initial gentle haptic feedback
+            if(navigator.vibrate) navigator.vibrate([15, 50, 15]);
 
-        function triggerDetonation() {
-            currentState = 'detonated';
-            document.body.classList.remove('glitching'); document.body.classList.add('branching');
-            statusText.innerText = "MULTIVERSE FRACTURE";
-            
-            if (navigator.vibrate) navigator.vibrate([100, 50, 400, 100, 800]); 
-            
-            createShatterParticles();
-            requestAnimationFrame(animateCanvas);
-
-            // Wait for heart to draw, then trigger Typewriter & Heartbeat
+            startScreen.style.opacity = '0';
             setTimeout(() => {
-                revealText.style.opacity = '1';
-                startTypewriter();
-                startHeartbeat();
-            }, 3500);
-        }
-
-        updateClock(); setInterval(updateClock, 1000);
-
-        // --- 2. QUANTUM TYPEWRITER ---
-        const titleText = "Timeline Branch Detected";
-        const bodyText = "4:30 pm… That’s when someone really special came into this world. I don’t know what the world gained that moment… but I know what I gained when you came into my life. Happy Birthday, ammu 🤍\n\nHappy Birthday, Ammu.\nI love you always💗.";
-        
-        function startTypewriter() {
-            const titleEl = document.getElementById('type-title');
-            const bodyEl = document.getElementById('type-body');
-            let tIdx = 0, bIdx = 0;
-
-            titleEl.classList.add('typewriter-cursor');
-            
-            function typeTitle() {
-                if (tIdx < titleText.length) {
-                    titleEl.innerHTML = titleText.substring(0, tIdx + 1);
-                    tIdx++;
-                    if(navigator.vibrate && tIdx % 2 === 0) navigator.vibrate(5); // Tiny typing clicks
-                    setTimeout(typeTitle, 40);
-                } else {
-                    titleEl.classList.remove('typewriter-cursor');
-                    bodyEl.classList.add('typewriter-cursor');
-                    setTimeout(typeBody, 400);
-                }
-            }
-
-            function typeBody() {
-                if (bIdx < bodyText.length) {
-                    // Replace \n with actual HTML line breaks
-                    let currentText = bodyText.substring(0, bIdx + 1).replace(/\n/g, '<br>');
-                    bodyEl.innerHTML = currentText;
-                    bIdx++;
-                    setTimeout(typeBody, 35);
-                } else {
-                    bodyEl.classList.remove('typewriter-cursor'); // Done typing
-                }
-            }
-            typeTitle();
-        }
-
-        // --- 3. HAPTIC HEARTBEAT ---
-        function startHeartbeat() {
-            if (!navigator.vibrate) return;
-            // A gentle thump-thump every 2 seconds
-            heartbeatInterval = setInterval(() => {
-                navigator.vibrate([30, 150, 40]);
-            }, 2000);
-        }
-
-        // --- 4. MULTIVERSE SHATTER & TOUCH RIPPLES ---
-        function createShatterParticles() {
-            const cx = cw / 2; const cy = ch / 2;
-            for (let i = 0; i < 180; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = (Math.random() * 12 + 3) * (Math.abs(Math.cos(angle)) + 0.5); 
-                particles.push({
-                    x: cx, y: cy,
-                    vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-                    r: Math.random() * 2 + 0.5, life: 1, decay: Math.random() * 0.01 + 0.003,
-                    color: Math.random() > 0.5 ? '#ffcf70' : '#ffffff' 
-                });
-            }
-        }
-
-        // Listen for touches to create Spacetime Ripples
-        canvas.addEventListener('pointerdown', (e) => {
-            if (currentState !== 'detonated') return;
-            const x = e.clientX || e.touches[0].clientX;
-            const y = e.clientY || e.touches[0].clientY;
-            
-            ripples.push({ x: x, y: y, radius: 0, maxRadius: 150, alpha: 0.8 });
-            if (navigator.vibrate) navigator.vibrate(15);
-        });
-
-        function animateCanvas() {
-            if (currentState !== 'detonated') return;
-            ctx.clearRect(0, 0, cw, ch);
-            let activeRender = false;
-
-            // Draw & Update Ripples
-            for (let i = ripples.length - 1; i >= 0; i--) {
-                let r = ripples[i];
-                r.radius += 5; // Ripple expansion speed
-                r.alpha -= 0.03;
+                startScreen.style.display = 'none';
+                hugContainer.style.opacity = '1';
                 
-                if (r.alpha <= 0) { ripples.splice(i, 1); continue; }
-                activeRender = true;
+                // Show intro text, then start cycle
+                breathText.style.opacity = '1';
+                setTimeout(() => {
+                    breathText.style.opacity = '0';
+                    setTimeout(startBreathingCycle, 1000);
+                }, 3500);
 
-                ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(255, 207, 112, ${r.alpha})`;
-                ctx.lineWidth = 2; ctx.stroke();
+            }, 1500);
+        });
+
+        // --- THE 4-2-6 GROUNDING BREATHING LOGIC ---
+        let cyclesCompleted = 0;
+        const totalCycles = 3; // 3 full deep breaths
+
+        function startBreathingCycle() {
+            if (cyclesCompleted >= totalCycles) {
+                triggerFinalHug();
+                return;
             }
 
-            // Update Particles with Ripple Physics
-            for (let i = 0; i < particles.length; i++) {
-                let p = particles[i];
-                if (p.life > 0) {
-                    activeRender = true;
-                    
-                    // Ripple Force Repulsion
-                    ripples.forEach(r => {
-                        const dx = p.x - r.x; const dy = p.y - r.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        // If particle is near the expanding ripple edge, push it outward
-                        if (Math.abs(dist - r.radius) < 20) {
-                            p.vx += (dx / dist) * 1.5;
-                            p.vy += (dy / dist) * 1.5;
-                        }
-                    });
+            // 1. INHALE (4 seconds)
+            changeText("Breathe in...");
+            orb.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            orb.style.transform = 'scale(2.8)';
+            startHaptics('inhale');
 
-                    p.x += p.vx; p.y += p.vy;
-                    p.vx *= 0.94; p.vy *= 0.94; p.vy += 0.15; // Friction & Gravity
-                    p.life -= p.decay;
+            // 2. HOLD (2 seconds)
+            setTimeout(() => {
+                changeText("Hold...");
+                stopHaptics();
+                
+                // 3. EXHALE (6 seconds)
+                setTimeout(() => {
+                    changeText("Breathe out...");
+                    orb.style.transition = 'transform 6s cubic-bezier(0.25, 1, 0.5, 1)';
+                    orb.style.transform = 'scale(1)';
+                    startHaptics('exhale');
 
-                    ctx.globalAlpha = Math.max(0, p.life);
-                    ctx.fillStyle = p.color;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
-                    ctx.shadowBlur = 10; ctx.shadowColor = p.color;
-                }
-            }
+                    // 4. REST (1.5 seconds) before next cycle
+                    setTimeout(() => {
+                        changeText("");
+                        stopHaptics();
+                        cyclesCompleted++;
+                        
+                        setTimeout(startBreathingCycle, 1500);
 
-            if (activeRender || particles.some(p => p.life > 0)) {
-                requestAnimationFrame(animateCanvas);
+                    }, 6000); // Wait for exhale to finish
+                }, 2000); // Wait for hold to finish
+            }, 4000); // Wait for inhale to finish
+        }
+
+        // --- HAPTIC HEARTBEAT SYNCS WITH BREATHING ---
+        function startHaptics(phase) {
+            if (!navigator.vibrate) return;
+            clearInterval(hapticInterval);
+
+            if (phase === 'inhale') {
+                // Quick, uplifting pulses as chest expands
+                hapticInterval = setInterval(() => { navigator.vibrate(10); }, 600);
+            } else if (phase === 'exhale') {
+                // Slower, calming pulses as chest lowers
+                hapticInterval = setInterval(() => { navigator.vibrate(15); }, 1000);
             }
         }
 
-        // --- 5. 3D GYROSCOPIC PARALLAX ---
-        let currentTiltX = 0; let currentTiltY = 0;
-        window.addEventListener('deviceorientation', (e) => {
-            if (!e.gamma || !e.beta || currentState !== 'detonated') return; 
-            let targetX = Math.max(-20, Math.min(20, e.gamma));
-            let targetY = Math.max(-20, Math.min(20, e.beta - 45));
-            currentTiltX += (targetX - currentTiltX) * 0.1;
-            currentTiltY += (targetY - currentTiltY) * 0.1;
-            parallaxWrapper.style.transform = `translate(${currentTiltX * 1.5}px, ${currentTiltY * 1.5}px)`;
-        });
+        function stopHaptics() {
+            clearInterval(hapticInterval);
+        }
 
-        // --- SECRET MANUAL OVERRIDE ---
-        let tapCount = 0;
-        statusText.addEventListener('click', () => {
-            tapCount++; if (tapCount >= 3 && currentState === 'stable') triggerDetonation();
-        });
+        // --- SMOOTH TEXT CROSSFADING ---
+        function changeText(newText) {
+            breathText.style.opacity = '0';
+            setTimeout(() => {
+                breathText.innerText = newText;
+                if(newText !== "") breathText.style.opacity = '1';
+            }, 600); // Wait for fade out
+        }
+
+        // --- THE FINALE (THE HUG) ---
+        function triggerFinalHug() {
+            // Orb expands infinitely to swallow the screen
+            orb.style.transition = 'transform 4s ease-in';
+            orb.style.transform = 'scale(20)';
+            
+            // Soft, continuous vibration simulating a warm embrace
+            if(navigator.vibrate) navigator.vibrate([30, 100, 30, 100, 50, 200, 50]);
+
+            setTimeout(() => {
+                finalScreen.style.opacity = '1';
+                
+                setTimeout(() => {
+                    finalMessage.classList.add('show');
+                }, 1000);
+
+            }, 2500); // Trigger mid-expansion
+        }
     </script>
 </body>
 </html>
