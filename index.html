@@ -13,19 +13,23 @@
         * {
             margin: 0; padding: 0; box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none; /* Prevents Android text highlighting */
+            -webkit-user-select: none; 
             user-select: none; 
         }
 
         body, html {
-            width: 100vw; min-height: 100vh; min-height: 100dvh;
+            width: 100vw; 
+            /* 100dvh adjusts for Android URL bars, safe-area-inset adjusts for Nav bars */
+            min-height: 100dvh;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             overflow: hidden;
             font-family: 'Montserrat', sans-serif;
             background: linear-gradient(135deg, #ffdac6 0%, #ffb5a7 35%, #fcd5ce 70%, #f8edeb 100%);
             background-size: 300% 300%;
             animation: sunriseBreathing 15s ease-in-out infinite alternate;
-            touch-action: none; /* Stops Android native gestures/scrolling */
+            touch-action: none;
+            /* CRITICAL ANDROID FIX: Forces padding at the bottom */
+            padding: env(safe-area-inset-top) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
         }
 
         /* --- THE MINDLESS RIPPLES (Canvas) --- */
@@ -45,7 +49,7 @@
 
         /* --- THE ACOUSTIC BLANKET TOGGLE --- */
         #audio-toggle {
-            position: absolute; top: max(5vh, 40px); right: 25px;
+            position: absolute; top: max(20px, env(safe-area-inset-top)); right: 20px;
             width: 45px; height: 45px; border-radius: 50%;
             background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.5);
             display: flex; justify-content: center; align-items: center;
@@ -57,9 +61,11 @@
 
         /* --- THE SILENT COMPANION EMBER --- */
         #companion-ember {
-            position: absolute; bottom: max(5vh, 30px); left: 25px;
+            position: absolute; 
+            bottom: max(20px, env(safe-area-inset-bottom)); /* Android Fix */
+            left: 20px;
             display: flex; align-items: center; gap: 12px; z-index: 5; opacity: 0.8;
-            max-width: 70%; pointer-events: none;
+            max-width: 80%; pointer-events: none;
         }
         .ember-dot {
             width: 6px; height: 6px; border-radius: 50%; background: #ffcf70;
@@ -72,15 +78,18 @@
             font-style: italic; letter-spacing: 1px; opacity: 0.8;
         }
 
-        /* --- THE COFFEE SCENE --- */
+        /* --- THE COFFEE SCENE (ANDROID FIX APPLIED) --- */
         #scene-container {
-            position: relative; width: 100%; max-width: 400px; height: 60vh;
+            position: relative; width: 100%; max-width: 400px; 
+            /* Changed from fixed height to flexible height */
+            flex: 1; max-height: 45vh; min-height: 250px;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             z-index: 10; pointer-events: none;
+            margin-bottom: 20px; /* Space between mug and text */
         }
 
         #steam-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 70%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 75%;
             pointer-events: none;
         }
 
@@ -93,7 +102,7 @@
 
         .mug-container {
             position: relative; width: clamp(120px, 35vw, 150px); height: clamp(100px, 30vw, 130px); 
-            margin-bottom: 5vh; animation: floatMug 6s ease-in-out infinite; 
+            animation: floatMug 6s ease-in-out infinite; 
             cursor: pointer; pointer-events: auto;
         }
 
@@ -117,17 +126,18 @@
 
         /* --- THE NO-REPLY MESSAGE (SWIPEABLE) --- */
         #message-container {
-            width: 90%; max-width: 450px; background: rgba(255, 255, 255, 0.4);
+            width: 100%; max-width: 450px; background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 20px; 
-            padding: clamp(20px, 5vw, 30px) 25px; text-align: center; z-index: 20; 
+            padding: clamp(20px, 5vw, 30px) 20px; text-align: center; z-index: 20; 
             box-shadow: 0 20px 40px rgba(200, 130, 130, 0.1);
             opacity: 0; transform: translateY(20px); animation: fadeUpMessage 2s ease forwards 1s;
             will-change: transform, opacity; touch-action: pan-x pan-y;
+            margin-bottom: max(40px, env(safe-area-inset-bottom)); /* Android Bottom Fix */
         }
 
-        .message-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.5rem, 6vw, 1.8rem); color: #6d4343; margin-bottom: 15px; font-weight: 600; pointer-events: none; }
-        .message-body { font-size: clamp(0.85rem, 4vw, 0.95rem); line-height: 1.7; color: #5a4040; font-weight: 400; pointer-events: none; }
+        .message-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.4rem, 6vw, 1.8rem); color: #6d4343; margin-bottom: 15px; font-weight: 600; pointer-events: none; }
+        .message-body { font-size: clamp(0.85rem, 4vw, 0.95rem); line-height: 1.6; color: #5a4040; font-weight: 400; pointer-events: none; }
         .highlight { font-weight: 600; color: #9c6363; }
         .swipe-hint { display: block; margin-top: 15px; font-size: 0.7rem; color: #a98888; letter-spacing: 2px; text-transform: uppercase; font-weight: 500; animation: slideHint 2s infinite ease-in-out; }
 
@@ -158,11 +168,6 @@
 
     <button id="audio-toggle">🎵</button>
 
-    <div id="companion-ember">
-        <div class="ember-dot"></div>
-        <div class="ember-text">As long as this light is glowing, I'm thinking of you.</div>
-    </div>
-
     <div id="scene-container">
         <div id="steam-container"></div>
 
@@ -187,9 +192,14 @@
         </div>
     </div>
 
+    <div id="companion-ember">
+        <div class="ember-dot"></div>
+        <div class="ember-text">As long as this light is glowing, I'm thinking of you.</div>
+    </div>
+
     <script>
         // ==========================================
-        // 1. MINDLESS RIPPLES (Android Optimized)
+        // 1. MINDLESS RIPPLES
         // ==========================================
         const rCanvas = document.getElementById('ripple-canvas');
         const rctx = rCanvas.getContext('2d');
@@ -199,13 +209,9 @@
 
         window.addEventListener('resize', () => { cw = rCanvas.width = window.innerWidth; ch = rCanvas.height = window.innerHeight; });
 
-        function addRipple(x, y) {
-            ripples.push({ x: x, y: y, r: 0, alpha: 0.4 });
-        }
+        function addRipple(x, y) { ripples.push({ x: x, y: y, r: 0, alpha: 0.4 }); }
 
-        // Using pointermove works cleanly across modern mobile devices
         window.addEventListener('pointermove', (e) => {
-            // Throttled slightly for low-end Androids to maintain 60fps
             if(Math.random() > 0.6) addRipple(e.clientX, e.clientY);
         });
 
@@ -213,16 +219,10 @@
             rctx.clearRect(0, 0, cw, ch);
             for (let i = ripples.length - 1; i >= 0; i--) {
                 let rp = ripples[i];
-                rp.r += 1.5; 
-                rp.alpha -= 0.008; 
-                
+                rp.r += 1.5; rp.alpha -= 0.008; 
                 if (rp.alpha <= 0) { ripples.splice(i, 1); continue; }
-                
-                rctx.beginPath();
-                rctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
-                rctx.strokeStyle = `rgba(255, 255, 255, ${rp.alpha})`;
-                rctx.lineWidth = 1.5;
-                rctx.stroke();
+                rctx.beginPath(); rctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+                rctx.strokeStyle = `rgba(255, 255, 255, ${rp.alpha})`; rctx.lineWidth = 1.5; rctx.stroke();
             }
             requestAnimationFrame(animateRipples);
         }
@@ -236,11 +236,10 @@
 
         audioToggle.addEventListener('click', () => {
             if (ambientAudio.paused) {
-                // Audio promise handling for stricter mobile browsers
                 ambientAudio.play().then(() => {
                     audioToggle.classList.add('playing');
                     if(navigator.vibrate) navigator.vibrate(10);
-                }).catch(e => console.log("Audio play blocked until interaction:", e));
+                }).catch(e => console.log("Audio play blocked", e));
             } else {
                 ambientAudio.pause();
                 audioToggle.classList.remove('playing');
@@ -281,18 +280,16 @@
         setInterval(createSteamWord, 4000);
 
         // ==========================================
-        // 4. TACTILE WARM MUG (Android Haptic Tweaked)
+        // 4. TACTILE WARM MUG
         // ==========================================
         const mug = document.getElementById('coffee-mug');
         let holdInterval;
 
         function startMugHold(e) {
-            // Prevent default but allow code to execute natively
             if(e.cancelable) e.preventDefault(); 
             document.body.classList.add('holding-mug');
             if(navigator.vibrate) navigator.vibrate(30);
 
-            // Interval changed to 150ms to prevent Android blocking spam vibrations
             holdInterval = setInterval(() => {
                 if(navigator.vibrate) navigator.vibrate(15);
                 if(Math.random() > 0.7) createSteamWord();
@@ -308,10 +305,10 @@
         mug.addEventListener('mousedown', startMugHold);
         window.addEventListener('touchend', endMugHold);
         window.addEventListener('mouseup', endMugHold);
-        window.addEventListener('touchcancel', endMugHold); // Fixes sticky touch bug on swipe
+        window.addEventListener('touchcancel', endMugHold);
 
         // ==========================================
-        // 5. THE EXHALE SWIPE (60fps Physics)
+        // 5. THE EXHALE SWIPE 
         // ==========================================
         const msgContainer = document.getElementById('message-container');
         let startX = 0; let currentX = 0; let isDragging = false; let hasSwiped = false;
@@ -325,12 +322,11 @@
 
         function dragSwipe(e) {
             if (!isDragging || hasSwiped) return;
-            // e.preventDefault() here physically stops the Android browser from trying to scroll
             if(e.cancelable) e.preventDefault(); 
             
             currentX = e.touches ? e.touches[0].clientX : e.clientX;
             let diff = currentX - startX;
-            if (diff < -30) diff = -30; // Stronger resistance pulling left
+            if (diff < -30) diff = -30; 
             
             msgContainer.style.transform = `translateX(${diff}px) translateY(20px) rotate(${diff * 0.03}deg)`;
             msgContainer.style.opacity = Math.max(0, 1 - (Math.abs(diff) / (window.innerWidth * 1.2)));
@@ -341,7 +337,6 @@
             isDragging = false;
             let diff = currentX - startX;
 
-            // Threshold lowered slightly for easier mobile swiping
             if (diff > 80) {
                 hasSwiped = true;
                 msgContainer.style.transition = 'all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)';
@@ -360,20 +355,19 @@
 
         msgContainer.addEventListener('touchstart', startSwipe, {passive: true});
         msgContainer.addEventListener('mousedown', startSwipe);
-        window.addEventListener('touchmove', dragSwipe, {passive: false}); // passive false allows preventDefault
+        window.addEventListener('touchmove', dragSwipe, {passive: false}); 
         window.addEventListener('mousemove', dragSwipe);
         window.addEventListener('touchend', endSwipe);
         window.addEventListener('mouseup', endSwipe);
-        window.addEventListener('touchcancel', endSwipe); // Crucial for Android edge swiping
+        window.addEventListener('touchcancel', endSwipe); 
 
         // ==========================================
-        // 6. DANDELION SEED PARTICLE ENGINE
+        // 6. DANDELION SEEDS
         // ==========================================
         function triggerDandelions() {
             const rect = msgContainer.getBoundingClientRect();
             const startY = rect.top + (rect.height / 2);
             
-            // Generate 35 optimized seeds
             for(let i = 0; i < 35; i++) {
                 let seed = document.createElement('div');
                 seed.className = 'dandelion-seed';
